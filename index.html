@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<title>Análisis de viabilidad de promesas — El Comercio</title>
+<style>
+:root {
+  --amarillo:     #F5D000;
+  --amarillo-2:   #E8C400;
+  --negro:        #111111;
+  --gris-1:       #1C1C1C;
+  --gris-2:       #333333;
+  --gris-3:       #555555;
+  --gris-4:       #888888;
+  --gris-5:       #BBBBBB;
+  --gris-6:       #E5E5E5;
+  --blanco:       #FFFFFF;
+  --papel:        #FAFAF7;
+
+  --viable:        #1A6B3C;
+  --viable-bg:     #E6F4ED;
+  --viable-brd:    #A8D5B8;
+  --inviable:      #B91C1C;
+  --inviable-bg:   #FDEAEA;
+  --inviable-brd:  #F5AAAA;
+  --obligacion:    #1D4ED8;
+  --obligacion-bg: #EEF2FF;
+  --obligacion-brd:#BFCBF7;
+  --nomanos:       #92400E;
+  --nomanos-bg:    #FEF3E2;
+  --nomanos-brd:   #F8CE8A;
+  --yaexiste:      #6B21A8;
+  --yaexiste-bg:   #F5EEFF;
+  --yaexiste-brd:  #D8B4FE;
+
+  --r: 3px;
+  --font-serif: 'Georgia', 'Times New Roman', serif;
+  --font-ui: system-ui, -apple-system, Arial, sans-serif;
+  --font-mono: 'Courier New', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-ui); background: var(--papel); color: var(--negro); min-height: 100vh; }
+
+/* ── HEADER ── */
+header {
+  background: var(--negro);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 3px solid var(--amarillo);
+}
+
+.header-left { display: flex; align-items: center; gap: 14px; }
+
+.ec-logo {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  color: var(--blanco);
+  letter-spacing: 0.05em;
+  font-style: italic;
+}
+
+.header-pipe { color: var(--amarillo); font-size: 18px; opacity: 0.6; }
+
+.tool-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--amarillo);
+}
+
+.btn-cfg {
+  background: none;
+  border: 1px solid #333;
+  color: var(--gris-4);
+  padding: 6px 14px;
+  border-radius: var(--r);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-cfg:hover { border-color: var(--amarillo); color: var(--amarillo); }
+
+/* ── MODAL ── */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.overlay.open { display: flex; }
+
+.modal {
+  background: var(--negro);
+  border: 1px solid #2A2A2A;
+  border-top: 3px solid var(--amarillo);
+  border-radius: 4px;
+  padding: 32px;
+  width: 520px;
+  max-width: 95vw;
+}
+
+.modal h2 {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  color: var(--blanco);
+  margin-bottom: 8px;
+}
+
+.modal-sub {
+  font-size: 12px;
+  color: var(--gris-4);
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+.field { margin-bottom: 18px; }
+
+.field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gris-4);
+  margin-bottom: 7px;
+}
+
+.field input {
+  width: 100%;
+  background: #1A1A1A;
+  border: 1px solid #2C2C2C;
+  border-radius: var(--r);
+  padding: 10px 14px;
+  color: var(--blanco);
+  font-size: 13px;
+  font-family: var(--font-mono);
+  transition: border-color 0.15s;
+}
+.field input:focus { outline: none; border-color: var(--amarillo); }
+.field .hint { font-size: 11px; color: var(--gris-3); margin-top: 5px; }
+
+.modal-btns { display: flex; gap: 10px; margin-top: 28px; justify-content: flex-end; }
+
+/* ── HERO ── */
+.hero {
+  background: var(--negro);
+  padding: 48px 32px 40px;
+  border-bottom: 1px solid #1A1A1A;
+}
+
+.hero-inner { max-width: 860px; margin: 0 auto; }
+
+.hero-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--amarillo);
+  margin-bottom: 14px;
+}
+
+.hero-title {
+  font-family: var(--font-serif);
+  font-size: 38px;
+  line-height: 1.15;
+  color: var(--blanco);
+  margin-bottom: 14px;
+  max-width: 680px;
+}
+
+.hero-sub {
+  font-size: 16px;
+  color: var(--gris-4);
+  line-height: 1.65;
+  max-width: 620px;
+  margin-bottom: 28px;
+}
+
+.hero-intro {
+  font-size: 14px;
+  color: var(--gris-3);
+  line-height: 1.75;
+  max-width: 680px;
+  border-left: 3px solid var(--amarillo);
+  padding-left: 18px;
+}
+
+/* ── MAIN ── */
+main { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
+
+/* ── TABS ── */
+.tabs {
+  display: flex;
+  border-bottom: 2px solid var(--gris-6);
+  margin-bottom: 24px;
+}
+
+.tab {
+  padding: 10px 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  border: none;
+  background: none;
+  color: var(--gris-4);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.15s;
+}
+.tab:hover { color: var(--negro); }
+.tab.active { color: var(--negro); border-bottom-color: var(--amarillo); }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── INPUTS ── */
+textarea {
+  width: 100%;
+  min-height: 200px;
+  background: var(--blanco);
+  border: 1px solid var(--gris-6);
+  border-radius: var(--r);
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.75;
+  resize: vertical;
+  font-family: var(--font-ui);
+  color: var(--negro);
+}
+textarea:focus { outline: none; border-color: var(--amarillo); }
+
+.url-row { display: flex; gap: 10px; }
+
+.url-row input {
+  flex: 1;
+  border: 1px solid var(--gris-6);
+  border-radius: var(--r);
+  padding: 11px 16px;
+  font-size: 14px;
+  color: var(--negro);
+  background: var(--blanco);
+}
+.url-row input:focus { outline: none; border-color: var(--amarillo); }
+
+.file-drop {
+  border: 2px dashed var(--gris-5);
+  border-radius: var(--r);
+  padding: 44px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--blanco);
+}
+.file-drop:hover, .file-drop.drag { border-color: var(--amarillo); background: #FFFDF0; }
+.file-drop .icon { font-size: 30px; margin-bottom: 12px; }
+.file-drop p { font-size: 13px; color: var(--gris-4); }
+.file-drop input { display: none; }
+#file-name { font-size: 12px; color: var(--amarillo-2); font-weight: 700; margin-top: 8px; }
+
+/* ── CONTEXTO ── */
+.ctx-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.ctx-grid input {
+  border: 1px solid var(--gris-6);
+  border-radius: var(--r);
+  padding: 9px 14px;
+  font-size: 13px;
+  color: var(--negro);
+  background: var(--blanco);
+}
+.ctx-grid input:focus { outline: none; border-color: var(--amarillo); }
+
+/* ── BOTONES ── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--amarillo);
+  color: var(--negro);
+  border: none;
+  border-radius: var(--r);
+  padding: 12px 28px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-top: 18px;
+}
+.btn-primary:hover { background: var(--amarillo-2); }
+.btn-primary:disabled { background: var(--gris-5); color: var(--blanco); cursor: not-allowed; }
+
+.btn-sec {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  color: var(--gris-3);
+  border: 1px solid var(--gris-6);
+  border-radius: var(--r);
+  padding: 9px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-sec:hover { border-color: var(--negro); color: var(--negro); }
+
+/* ── ERROR ── */
+.error-box {
+  background: var(--inviable-bg);
+  border: 1px solid var(--inviable-brd);
+  border-radius: var(--r);
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--inviable);
+  margin-top: 14px;
+  display: none;
+}
+
+/* ── PROGRESO ── */
+#progress-section {
+  display: none;
+  background: var(--blanco);
+  border: 1px solid var(--gris-6);
+  border-top: 3px solid var(--amarillo);
+  border-radius: var(--r);
+  padding: 28px;
+  margin-top: 32px;
+}
+
+.prog-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gris-4);
+  margin-bottom: 16px;
+}
+
+.prog-bar-wrap {
+  background: var(--gris-6);
+  border-radius: 100px;
+  height: 4px;
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+.prog-bar {
+  height: 100%;
+  background: var(--amarillo);
+  border-radius: 100px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+
+.steps { display: flex; flex-direction: column; gap: 9px; }
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--gris-5);
+  transition: color 0.2s;
+}
+.step.active { color: var(--negro); font-weight: 600; }
+.step.done { color: var(--viable); }
+.step .dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--gris-6);
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.step.active .dot { background: var(--amarillo); }
+.step.done .dot { background: var(--viable); }
+
+/* ── RESULTADOS ── */
+#results-section { display: none; margin-top: 48px; }
+
+.results-hdr {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.results-title {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  color: var(--negro);
+}
+
+.results-meta { font-size: 12px; color: var(--gris-4); margin-top: 4px; }
+
+.export-row { display: flex; gap: 8px; align-items: center; }
+.export-row span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gris-4);
+}
+
+/* ── STATS ── */
+.stats-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin: 20px 0 28px;
+}
+
+.stat {
+  border-radius: var(--r);
+  padding: 14px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.12s, opacity 0.15s;
+  border: 2px solid transparent;
+  user-select: none;
+}
+.stat:hover { transform: translateY(-2px); }
+.stat.sel { border-color: currentColor; }
+.stat.dim { opacity: 0.3; }
+
+.stat.viable     { background: var(--viable-bg);     color: var(--viable); }
+.stat.inviable   { background: var(--inviable-bg);   color: var(--inviable); }
+.stat.obligacion { background: var(--obligacion-bg); color: var(--obligacion); }
+.stat.nomanos    { background: var(--nomanos-bg);     color: var(--nomanos); }
+.stat.yaexiste   { background: var(--yaexiste-bg);    color: var(--yaexiste); }
+
+.stat-n { font-family: var(--font-serif); font-size: 30px; font-weight: bold; line-height: 1; margin-bottom: 5px; }
+.stat-l { font-size: 9px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.35; }
+
+/* ── TARJETAS ── */
+.cards { display: flex; flex-direction: column; gap: 14px; }
+
+.card {
+  background: var(--blanco);
+  border: 1px solid var(--gris-6);
+  border-left: 4px solid var(--gris-5);
+  border-radius: var(--r);
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+.card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
+.card.hide { display: none; }
+
+.card.viable     { border-left-color: var(--viable); }
+.card.inviable   { border-left-color: var(--inviable); }
+.card.obligacion { border-left-color: var(--obligacion); }
+.card.nomanos    { border-left-color: var(--nomanos); }
+.card.yaexiste   { border-left-color: var(--yaexiste); }
+.card.checking   { border-left-color: var(--gris-5); }
+
+.card-top {
+  padding: 18px 20px 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.card-quote {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--negro);
+  flex: 1;
+}
+.card-quote::before { content: '\201C'; }
+.card-quote::after  { content: '\201D'; }
+
+.badge {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.b-viable     { background: var(--viable-bg);     color: var(--viable);     border: 1px solid var(--viable-brd); }
+.b-inviable   { background: var(--inviable-bg);   color: var(--inviable);   border: 1px solid var(--inviable-brd); }
+.b-obligacion { background: var(--obligacion-bg); color: var(--obligacion); border: 1px solid var(--obligacion-brd); }
+.b-nomanos    { background: var(--nomanos-bg);     color: var(--nomanos);    border: 1px solid var(--nomanos-brd); }
+.b-yaexiste   { background: var(--yaexiste-bg);    color: var(--yaexiste);   border: 1px solid var(--yaexiste-brd); }
+.b-check      { background: var(--gris-6);         color: var(--gris-4);     border: 1px solid #DDD; }
+
+.card-body { padding: 0 20px 18px; }
+
+.card-meta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.mi {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--gris-4);
+}
+.mi strong { color: var(--gris-2); font-weight: 600; }
+
+.card-analysis {
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--gris-2);
+  background: var(--papel);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+
+.card-obs {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--nomanos);
+  background: var(--nomanos-bg);
+  border-left: 3px solid var(--nomanos-brd);
+  border-radius: var(--r);
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+
+.card-sources { display: flex; flex-direction: column; gap: 4px; }
+
+.src {
+  font-size: 12px;
+  color: var(--inviable);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.src:hover { text-decoration: underline; }
+
+.src-plain { font-size: 12px; color: var(--gris-3); display: flex; align-items: center; gap: 5px; }
+
+.spin-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--gris-4);
+  padding: 10px 0 4px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 15px; height: 15px;
+  border: 2px solid #DDD;
+  border-top-color: var(--amarillo);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ── PANEL VERIFICACIÓN RÁPIDA EN VIVO ── */
+.vivo-panel {
+  margin-top: 48px;
+  border: 2px solid var(--amarillo);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--blanco);
+}
+
+.vivo-header {
+  background: var(--negro);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.vivo-title-group { display: flex; align-items: center; gap: 12px; }
+
+.vivo-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--amarillo);
+  flex-shrink: 0;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.vivo-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amarillo);
+}
+
+.vivo-sub {
+  font-size: 11px;
+  color: var(--gris-4);
+}
+
+.vivo-body { padding: 20px; }
+
+.vivo-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.vivo-textarea {
+  flex: 1;
+  min-height: 72px;
+  background: var(--papel);
+  border: 1px solid var(--gris-6);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  font-family: var(--font-ui);
+  color: var(--negro);
+  transition: border-color 0.15s;
+}
+.vivo-textarea:focus { outline: none; border-color: var(--amarillo); }
+
+.vivo-hint {
+  font-size: 11px;
+  color: var(--gris-4);
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
+.vivo-results { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
+
+.vivo-card {
+  border: 1px solid var(--gris-6);
+  border-left: 4px solid var(--gris-5);
+  border-radius: var(--r);
+  background: var(--papel);
+  overflow: hidden;
+}
+.vivo-card.viable     { border-left-color: var(--viable); }
+.vivo-card.inviable   { border-left-color: var(--inviable); }
+.vivo-card.obligacion { border-left-color: var(--obligacion); }
+.vivo-card.nomanos    { border-left-color: var(--nomanos); }
+.vivo-card.yaexiste   { border-left-color: var(--yaexiste); }
+
+.vivo-card-top {
+  padding: 12px 16px 8px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vivo-card-frase {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--negro);
+  flex: 1;
+  font-style: italic;
+}
+.vivo-card-frase::before { content: '\201C'; }
+.vivo-card-frase::after  { content: '\201D'; }
+
+.vivo-card-body { padding: 0 16px 14px; }
+
+.vivo-analysis {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--gris-2);
+  margin-bottom: 8px;
+}
+
+.vivo-ts {
+  font-size: 11px;
+  color: var(--gris-5);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.vivo-empty {
+  text-align: center;
+  padding: 28px;
+  font-size: 13px;
+  color: var(--gris-5);
+  display: none;
+}
+
+/* ── METODOLOGÍA ── */
+.metodo {
+  margin-top: 48px;
+  border-top: 2px solid var(--negro);
+  padding-top: 32px;
+}
+
+.metodo-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gris-4);
+  margin-bottom: 10px;
+}
+
+.metodo h2 {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  color: var(--negro);
+  margin-bottom: 16px;
+}
+
+.metodo p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--gris-2);
+  margin-bottom: 14px;
+  max-width: 720px;
+}
+
+.cal-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+  max-width: 720px;
+}
+
+.cal-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--gris-2);
+  padding: 12px 14px;
+  border-radius: var(--r);
+  border: 1px solid var(--gris-6);
+  background: var(--blanco);
+}
+
+.cal-pill {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 100px;
+  margin-top: 1px;
+}
+
+@media (max-width: 640px) {
+  .stats-strip { grid-template-columns: repeat(3, 1fr); }
+  .ctx-grid { grid-template-columns: 1fr; }
+  .hero-title { font-size: 26px; }
+  header { padding: 0 16px; }
+  main { padding: 28px 16px 60px; }
+  .hero { padding: 32px 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <span class="ec-logo">El Comercio</span>
+    <span class="header-pipe">|</span>
+    <span class="tool-name">Análisis de viabilidad de promesas</span>
+  </div>
+  <button class="btn-cfg" onclick="toggleCfg()">⚙ API</button>
+</header>
+
+<!-- MODAL CONFIG -->
+<div class="overlay" id="cfg-modal">
+  <div class="modal">
+    <h2>Configuración de APIs</h2>
+    <p class="modal-sub">Las claves se guardan solo en tu navegador (localStorage). No se envían a ningún servidor propio de El Comercio.</p>
+    <div class="field">
+      <label>OpenAI API Key</label>
+      <input type="password" id="cfg-openai" placeholder="sk-...">
+      <div class="hint">Detecta las promesas del discurso (modelo GPT-4o). <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--amarillo)">Obtener clave →</a></div>
+    </div>
+    <div class="field">
+      <label>Perplexity API Key</label>
+      <input type="password" id="cfg-perplexity" placeholder="pplx-...">
+      <div class="hint">Verifica viabilidad consultando MEF, SPIJ, ministerios y PCM en tiempo real.</div>
+    </div>
+    <div id="test-status" style="display:none; margin-top:4px; padding:12px 14px; border-radius:3px; font-size:12px; line-height:1.7; background:#1A1A1A; border:1px solid #2C2C2C; color:#BBB"></div>
+    <div class="modal-btns">
+      <button class="btn-sec" onclick="probarConexion()" id="btn-test">Probar conexión</button>
+      <button class="btn-sec" onclick="toggleCfg()">Cancelar</button>
+      <button class="btn-primary" onclick="saveCfg()" style="margin-top:0">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">El Comercio</div>
+    <h1 class="hero-title">Análisis de viabilidad de promesas</h1>
+    <p class="hero-sub">Evaluamos compromisos anunciados en discursos de gobierno según su viabilidad legal, presupuestal e institucional.</p>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-tab="texto" onclick="switchTab(this)">Texto</button>
+    <button class="tab" data-tab="archivo" onclick="switchTab(this)">PDF / TXT</button>
+  </div>
+
+  <!-- Tab: Texto -->
+  <div class="tab-panel active" id="tab-texto">
+    <textarea id="in-texto" placeholder="Pega aquí el texto del discurso o mensaje a la nación…"></textarea>
+  </div>
+
+  <!-- Tab: Archivo -->
+  <div class="tab-panel" id="tab-archivo">
+    <div class="file-drop" id="drop-zone">
+      <input type="file" id="file-in" accept=".txt,.pdf">
+      <div class="icon">📄</div>
+      <p><strong>Arrastra el archivo aquí</strong> o haz clic para seleccionar</p>
+      <p style="margin-top:6px">PDF · TXT</p>
+      <div id="file-name"></div>
+    </div>
+    <textarea id="in-archivo" style="margin-top:14px; min-height:100px; display:none" placeholder="Texto extraído del archivo…"></textarea>
+  </div>
+
+  <!-- Contexto -->
+  <div class="ctx-grid">
+    <input type="text" id="ctx-orador" placeholder="Orador (ej. Keiko Fujimori)">
+    <input type="text" id="ctx-fecha"  placeholder="Fecha (ej. 28 de julio de 2026)">
+    <input type="text" id="ctx-evento" placeholder="Evento (ej. Mensaje a la Nación)">
+  </div>
+
+  <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+    <button class="btn-primary" id="btn-analizar" onclick="iniciar()">
+      Analizar discurso
+    </button>
+    <span id="aviso-key" style="font-size:12px; color:var(--inviable); display:none">
+      ⚠ Configura las claves API primero (botón ⚙ arriba)
+    </span>
+  </div>
+
+  <div class="error-box" id="error-box"></div>
+
+  <!-- Progreso -->
+  <div id="progress-section">
+    <div class="prog-title">Procesando discurso</div>
+    <div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar"></div></div>
+    <div class="steps">
+      <div class="step" id="st1"><div class="dot"></div>Leyendo el discurso</div>
+      <div class="step" id="st2"><div class="dot"></div>Detectando promesas con GPT-4o</div>
+      <div class="step" id="st3"><div class="dot"></div>Verificando viabilidad (MEF · SPIJ · ministerios · PCM)</div>
+      <div class="step" id="st4"><div class="dot"></div>Generando resultados</div>
+    </div>
+  </div>
+
+  <!-- Resultados -->
+  <div id="results-section">
+    <div class="results-hdr">
+      <div>
+        <div class="results-title" id="r-title">Compromisos identificados</div>
+        <div class="results-meta" id="r-meta"></div>
+      </div>
+      <div class="export-row">
+        <button class="btn-primary" id="btn-calificar-todas" onclick="calificarTodas()" style="margin-top:0; padding:9px 18px; font-size:12px">⚡ Calificar todas con IA</button>
+        <span>Exportar</span>
+        <button class="btn-sec" onclick="expCSV()">CSV</button>
+        <button class="btn-sec" onclick="expHTML()">HTML</button>
+      </div>
+    </div>
+
+    <!-- Estadísticas con filtro -->
+    <div class="stats-strip" id="stats-strip"></div>
+
+    <!-- Tarjetas -->
+    <div class="cards" id="cards"></div>
+  </div>
+
+  <!-- ── VERIFICACIÓN RÁPIDA EN VIVO ── -->
+  <div class="vivo-panel">
+    <div class="vivo-header">
+      <div class="vivo-title-group">
+        <div class="vivo-dot"></div>
+        <div>
+          <div class="vivo-title">Verificación rápida en vivo</div>
+          <div class="vivo-sub">Para frases que difieren del texto escrito durante la transmisión</div>
+        </div>
+      </div>
+      <button class="btn-sec" onclick="limpiarVivo()" style="font-size:11px; padding:6px 12px; color:var(--gris-5)">Limpiar</button>
+    </div>
+    <div class="vivo-body">
+      <div class="vivo-input-row">
+        <textarea
+          class="vivo-textarea"
+          id="vivo-input"
+          placeholder="Pega aquí la frase exacta que dijo en vivo y que difiere del texto escrito…&#10;Ejemplo: «Vamos a duplicar el presupuesto de salud en los próximos seis meses»"
+          onkeydown="vivoKeydown(event)"
+        ></textarea>
+        <button class="btn-primary" id="btn-vivo" onclick="verificarVivo()" style="margin-top:0; align-self:flex-end; white-space:nowrap">
+          Verificar frase
+        </button>
+      </div>
+      <div class="vivo-hint">
+        💡 Ctrl+Enter para verificar rápido · Las verificaciones se acumulan abajo en orden cronológico · Solo tú ves estos resultados
+      </div>
+      <div class="vivo-results" id="vivo-results">
+        <div class="vivo-empty" id="vivo-empty">Las verificaciones en vivo aparecerán aquí</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Metodología -->
+  <div class="metodo">
+    <div class="metodo-eyebrow">Metodología</div>
+    <h2>Análisis de viabilidad de promesas</h2>
+    <p>Para evaluar los compromisos anunciados en un discurso de gobierno, El Comercio emplea un proceso de dos etapas. En primer lugar, el equipo utiliza esta herramienta de inteligencia artificial, que analiza el discurso e identifica las frases que constituyen compromisos o promesas de gobierno.</p>
+    <p>Las promesas identificadas son analizadas con base en la normativa vigente (SPIJ), la Ley de Presupuesto del Sector Público y sus anexos, la Consulta Amigable del MEF, las competencias del Ejecutivo, los TUPA de los ministerios y la PCM, y fuentes oficiales del Estado peruano.</p>
+    <p>El Comercio aplica <strong>cinco calificaciones</strong>:</p>
+    <div class="cal-grid">
+      <div class="cal-row">
+        <span class="cal-pill b-viable">Viable</span>
+        Anuncio que puede ejecutarse dentro del período de gobierno con los recursos y el marco normativo existentes.
+      </div>
+      <div class="cal-row">
+        <span class="cal-pill b-inviable">Inviable</span>
+        Compromiso que enfrenta obstáculos legales, presupuestales o institucionales que impiden su realización.
+      </div>
+      <div class="cal-row">
+        <span class="cal-pill b-obligacion">Obligación legal</span>
+        Acción que la normativa vigente ya le impone al Ejecutivo, independientemente de que sea anunciada como novedad.
+      </div>
+      <div class="cal-row">
+        <span class="cal-pill b-nomanos">No está en sus manos</span>
+        Compromiso cuya ejecución recae en otras instituciones del Estado, gobiernos regionales o locales, o poderes distintos al Ejecutivo.
+      </div>
+      <div class="cal-row">
+        <span class="cal-pill b-yaexiste">Ya existe</span>
+        Anuncio que describe una política, programa o servicio que el Estado ya viene implementando, sin plantear una mejora medible o una meta distinta.
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────
+const cfg = { openai: '', perplexity: '' };
+
+function loadCfg() {
+  try {
+    const s = JSON.parse(localStorage.getItem('viabilidad_cfg') || '{}');
+    cfg.openai = s.openai || '';
+    cfg.perplexity = s.perplexity || '';
+  } catch(e) {}
+}
+
+function limpiarClave(v) {
+  // Quitar espacios, saltos de línea y caracteres invisibles que rompen el header HTTP
+  return (v || '').replace(/[\s\r\n\u200B-\u200D\uFEFF]/g, '');
+}
+
+function saveCfg() {
+  cfg.openai = limpiarClave(document.getElementById('cfg-openai').value);
+  cfg.perplexity = limpiarClave(document.getElementById('cfg-perplexity').value);
+
+  // Detectar prefijos duplicados comunes al pegar dos veces
+  if (cfg.openai.startsWith('sk-projsk-proj-')) cfg.openai = cfg.openai.replace('sk-projsk-proj-', 'sk-proj-');
+  if (cfg.perplexity.toLowerCase().startsWith('pplx-') && !cfg.perplexity.startsWith('pplx-')) {
+    cfg.perplexity = 'pplx-' + cfg.perplexity.slice(5); // corregir Pplx- → pplx-
+  }
+
+  localStorage.setItem('viabilidad_cfg', JSON.stringify(cfg));
+  toggleCfg();
+}
+
+// Probar ambas claves con llamadas mínimas y mostrar el resultado exacto
+async function probarConexion() {
+  const st = document.getElementById('test-status');
+  const btn = document.getElementById('btn-test');
+  st.style.display = 'block';
+  btn.disabled = true;
+  btn.textContent = 'Probando…';
+
+  const oaiKey  = limpiarClave(document.getElementById('cfg-openai').value);
+  const pplxKey = limpiarClave(document.getElementById('cfg-perplexity').value);
+
+  let html = '';
+
+  // Test OpenAI
+  if (!oaiKey) {
+    html += '⚪ <strong>OpenAI:</strong> sin clave<br>';
+  } else if (!oaiKey.startsWith('sk-')) {
+    html += '🔴 <strong>OpenAI:</strong> la clave debe empezar con sk- (revisa que no haya texto extra al inicio)<br>';
+  } else {
+    try {
+      const r = await fetch('https://api.openai.com/v1/models', {
+        headers: { 'Authorization': 'Bearer ' + oaiKey }
+      });
+      if (r.ok) html += '🟢 <strong>OpenAI:</strong> clave válida, conexión OK<br>';
+      else {
+        const e = await r.json().catch(() => ({}));
+        html += `🔴 <strong>OpenAI:</strong> ${e.error?.message || 'HTTP ' + r.status}<br>`;
+      }
+    } catch(e) {
+      html += `🔴 <strong>OpenAI:</strong> no se pudo conectar (${e.message}). Revisa tu red, VPN o bloqueadores de anuncios.<br>`;
+    }
+  }
+
+  // Test Perplexity
+  if (!pplxKey) {
+    html += '⚪ <strong>Perplexity:</strong> sin clave<br>';
+  } else if (!pplxKey.startsWith('pplx-')) {
+    html += '🔴 <strong>Perplexity:</strong> la clave debe empezar con pplx- en minúsculas<br>';
+  } else {
+    try {
+      const r = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + pplxKey },
+        body: JSON.stringify({ model: 'sonar', messages: [{ role: 'user', content: 'test' }], max_tokens: 16 })
+      });
+      if (r.ok) html += '🟢 <strong>Perplexity:</strong> clave válida, conexión OK';
+      else {
+        const e = await r.json().catch(() => ({}));
+        html += `🔴 <strong>Perplexity:</strong> ${e.error?.message || 'HTTP ' + r.status}`;
+      }
+    } catch(e) {
+      html += `🔴 <strong>Perplexity:</strong> no se pudo conectar (${e.message})`;
+    }
+  }
+
+  st.innerHTML = html;
+  btn.disabled = false;
+  btn.textContent = 'Probar conexión';
+}
+
+function toggleCfg() {
+  const m = document.getElementById('cfg-modal');
+  m.classList.toggle('open');
+  if (m.classList.contains('open')) {
+    document.getElementById('cfg-openai').value = cfg.openai;
+    document.getElementById('cfg-perplexity').value = cfg.perplexity;
+  }
+}
+
+// ── TABS ──────────────────────────────────────────────────────
+function switchTab(btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+}
+
+// ── ARCHIVO ───────────────────────────────────────────────────
+const dropZone = document.getElementById('drop-zone');
+const fileIn   = document.getElementById('file-in');
+
+dropZone.addEventListener('click', () => fileIn.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+fileIn.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+async function handleFile(file) {
+  document.getElementById('file-name').textContent = '✓ ' + file.name;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const ta = document.getElementById('in-archivo');
+
+  if (ext === 'txt') {
+    ta.value = await file.text();
+    ta.style.display = 'block';
+    return;
+  }
+
+  if (ext === 'pdf') {
+    ta.style.display = 'block';
+    ta.value = 'Extrayendo texto del PDF…';
+    ta.disabled = true;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      // Inicializar worker de pdf.js
+      if (typeof pdfjsLib === 'undefined') throw new Error('pdf.js no cargó correctamente. Verifica tu conexión a internet.');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item => item.str).join(' ');
+        fullText += pageText + '\n';
+      }
+      const textoLimpio = fullText.replace(/\s+/g, ' ').trim();
+      if (textoLimpio.length < 50) {
+        throw new Error('El PDF parece ser una imagen escaneada. Copia el texto manualmente en la pestaña "Texto".');
+      }
+      ta.value = textoLimpio;
+      ta.disabled = false;
+      document.getElementById('file-name').textContent = `✓ ${file.name} · ${pdf.numPages} páginas · ${textoLimpio.length.toLocaleString()} caracteres`;
+    } catch(e) {
+      ta.value = '';
+      ta.disabled = false;
+      showErr('Error al leer el PDF: ' + e.message);
+    }
+    return;
+  }
+
+  showErr('Formato no compatible. Usa PDF o TXT, o pega el texto directamente en la pestaña "Texto".');
+}
+
+
+// ── TEXTO ACTIVO ──────────────────────────────────────────────
+function getTexto() {
+  const activo = document.querySelector('.tab.active')?.dataset.tab;
+  if (activo === 'texto')   return document.getElementById('in-texto').value.trim();
+  if (activo === 'archivo') return document.getElementById('in-archivo').value.trim();
+  return '';
+}
+
+// ── OPENAI GPT-4o ─────────────────────────────────────────────
+async function callOpenAI(systemPrompt, userPrompt) {
+  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${cfg.openai}`
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      temperature: 0.1,
+      max_tokens: 4096,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user',   content: userPrompt }
+      ]
+    })
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error('OpenAI: ' + (err.error?.message || resp.status));
+  }
+  const data = await resp.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+
+// ── PERPLEXITY ────────────────────────────────────────────────
+async function callPerplexity(userPrompt) {
+  const resp = await fetch('https://api.perplexity.ai/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${cfg.perplexity}`
+    },
+    body: JSON.stringify({
+      model: 'sonar',
+      temperature: 0.1,
+      messages: [
+        {
+          role: 'system',
+          content: 'Eres un experto en derecho constitucional, presupuesto público (MEF/SIAF), TUPA de ministerios y PCM del Estado peruano. Solo respondes en JSON válido, sin texto adicional.'
+        },
+        { role: 'user', content: userPrompt }
+      ],
+      return_citations: true
+    })
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error('Perplexity: ' + (err.error?.message || resp.status));
+  }
+  const data = await resp.json();
+  return {
+    text: data.choices?.[0]?.message?.content || '',
+    citations: data.citations || []
+  };
+}
+
+// ── PARSE JSON ROBUSTO ────────────────────────────────────────
+function parseJSON(raw) {
+  let t = (raw || '').trim().replace(/^```json\s*/i,'').replace(/^```\s*/i,'').replace(/\s*```$/i,'').trim();
+  try { return JSON.parse(t); } catch(e) {}
+  const s = t.indexOf('{'), e2 = t.lastIndexOf('}');
+  if (s !== -1 && e2 > s) { try { return JSON.parse(t.slice(s, e2+1)); } catch(e) {} }
+  return null;
+}
+
+// ── PROMPTS ───────────────────────────────────────────────────
+function promptDeteccion(texto, orador, fecha, evento) {
+  return `Eres un analista político experto en identificar promesas presidenciales en discursos de gobierno peruanos.
+
+CONTEXTO:
+- Orador: ${orador || 'Presidente/a del Perú'}
+- Fecha: ${fecha || 'Sin especificar'}  
+- Evento: ${evento || 'Mensaje a la Nación'}
+
+CRITERIOS PARA IDENTIFICAR UNA PROMESA:
+Una promesa es un enunciado donde el orador se compromete a realizar una acción futura concreta. Señales: verbos en futuro ("implementaremos", "crearemos", "garantizaremos"), frases de compromiso ("nos comprometemos a", "vamos a", "mi gobierno asegurará"), metas cuantificables.
+
+NO incluir: saludos, agradecimientos, diagnósticos de problemas, menciones históricas, descripciones del pasado.
+
+TEXTO DEL DISCURSO:
+${texto}
+
+Devuelve SOLO este JSON sin texto adicional:
+{
+  "promesas": [
+    {
+      "promesa": "Texto literal del compromiso (completo, no resumido)",
+      "verbo": "Verbo o frase clave que marca el compromiso",
+      "plazo": "Plazo mencionado o 'Sin plazo definido'",
+      "sector": "economia|salud|educacion|seguridad|infraestructura|justicia|social|medioambiente|otro",
+      "cita": "Fragmento exacto del texto original (máx 120 caracteres)"
+    }
+  ]
+}`;
+}
+
+function promptViabilidad(promesa, sector, orador) {
+  return `Eres un experto en derecho constitucional, presupuesto público y gestión del Estado peruano. Debes evaluar la viabilidad de esta promesa presidencial.
+
+ORADOR: ${orador || 'Presidente/a del Perú'}
+SECTOR: ${sector}
+PROMESA: "${promesa}"
+
+FUENTES A CONSULTAR (en este orden de prioridad):
+1. Ley de Presupuesto del Sector Público vigente y sus anexos (mef.gob.pe → Presupuesto Aprobado; para 2026: Ley N° 32513). El Anexo 5 detalla el gasto por pliego, productos, proyectos y actividades del Gobierno Nacional — úsalo para verificar si la promesa tiene asignación presupuestal concreta.
+2. Consulta Amigable del MEF (apps5.mineco.gob.pe/transparencia/Navegador/default.aspx) — ejecución del gasto en tiempo real por sector, pliego y proyecto
+3. SPIJ (spij.minjus.gob.pe) — normativa vigente y leyes
+4. TUPA del ministerio sectorial correspondiente (gob.pe)
+5. PCM — competencias del Ejecutivo (pcm.gob.pe)
+6. Programas presupuestales vigentes del MIDIS, MINEDU, MINSA, etc.
+7. Portal de Transparencia Económica (transparencia.gob.pe)
+
+Al evaluar viabilidad presupuestal, cita cifras concretas: monto asignado en la Ley de Presupuesto al pliego/sector correspondiente, y % de ejecución si está disponible en Consulta Amigable.
+
+REGLA IMPORTANTE SOBRE PRESUPUESTO:
+Si la promesa enfrenta obstáculos ÚNICAMENTE presupuestales (el marco legal y las competencias sí lo permiten, pero no hay asignación suficiente en la Ley de Presupuesto vigente), debes: (a) calificarla según la situación ACTUAL, y (b) llenar el campo "condiciones" explicando qué mecanismo podría habilitarla: crédito suplementario aprobado por ley del Congreso, transferencia de partidas vía decreto supremo, o incorporación en el presupuesto del año fiscal siguiente. Sé específico sobre cuál mecanismo aplica y qué se necesitaría.
+
+CATEGORÍAS (elige EXACTAMENTE UNA):
+- VIABLE: puede ejecutarse dentro del período de gobierno con recursos y marco normativo existentes
+- INVIABLE: enfrenta obstáculos legales, presupuestales o institucionales que impiden su realización
+- OBLIGACION_LEGAL: la normativa vigente ya le impone esta acción al Ejecutivo (no es novedad)
+- NO_ESTA_EN_SUS_MANOS: la ejecución recae en otras instituciones, gobiernos subnacionales o poderes distintos al Ejecutivo
+- YA_EXISTE: describe una política/programa que el Estado ya implementa sin proponer mejora medible
+
+Devuelve SOLO este JSON:
+{
+  "categoria": "VIABLE|INVIABLE|OBLIGACION_LEGAL|NO_ESTA_EN_SUS_MANOS|YA_EXISTE",
+  "confianza": 85,
+  "analisis": "Análisis de 2-4 oraciones con datos concretos: artículos de ley, cifras MEF, nombres de programas existentes",
+  "obstaculos": "Obstáculos concretos o null",
+  "condiciones": "Si el obstáculo es presupuestal o normativo pero existe un mecanismo para habilitarla (crédito suplementario, transferencia de partidas, ley del Congreso, presupuesto del año siguiente), descríbelo aquí. Si no aplica: null",
+  "fuentes": [
+    { "nombre": "Nombre de la fuente oficial", "url": "https://...", "dato": "Dato concreto relevante" }
+  ]
+}`;
+}
+
+// ── ESTADO ────────────────────────────────────────────────────
+const ST = { promises: [], filter: null, orador: '', fecha: '', evento: '' };
+
+const CATS = {
+  VIABLE:             { label: 'Viable',                    short: 'Viable',     cls: 'viable',     badge: 'b-viable' },
+  INVIABLE:           { label: 'Inviable',                  short: 'Inviable',   cls: 'inviable',   badge: 'b-inviable' },
+  OBLIGACION_LEGAL:   { label: 'Obligación legal',          short: 'Obligación', cls: 'obligacion', badge: 'b-obligacion' },
+  NO_ESTA_EN_SUS_MANOS:{ label: 'No está en sus manos',    short: 'No es suyo', cls: 'nomanos',    badge: 'b-nomanos' },
+  YA_EXISTE:          { label: 'Ya existe',                 short: 'Ya existe',  cls: 'yaexiste',   badge: 'b-yaexiste' },
+  ERROR:              { label: 'Error — reintentar',        short: 'Error',      cls: 'checking',   badge: 'b-check' },
+  PENDIENTE:          { label: 'Sin calificar',              short: 'Pendiente',  cls: 'checking',   badge: 'b-check' },
+};
+
+// Orden de las 5 calificaciones oficiales para los botones manuales
+const CATS_MANUAL = ['VIABLE','INVIABLE','OBLIGACION_LEGAL','NO_ESTA_EN_SUS_MANOS','YA_EXISTE'];
+
+// ── UI HELPERS ────────────────────────────────────────────────
+function showErr(msg) {
+  const el = document.getElementById('error-box');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 9000);
+}
+
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('st' + i);
+    el.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+  document.getElementById('prog-bar').style.width = ((n-1)/4*100) + '%';
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── ANÁLISIS PRINCIPAL ────────────────────────────────────────
+async function iniciar() {
+  if (!cfg.openai) {
+    document.getElementById('aviso-key').style.display = 'inline';
+    toggleCfg();
+    return;
+  }
+
+  const texto = getTexto();
+  if (!texto || texto.length < 80) {
+    showErr('El texto del discurso es muy corto. Pega al menos un párrafo completo.');
+    return;
+  }
+
+  const orador = document.getElementById('ctx-orador').value.trim();
+  const fecha  = document.getElementById('ctx-fecha').value.trim();
+  const evento = document.getElementById('ctx-evento').value.trim();
+  ST.orador = orador; ST.fecha = fecha; ST.evento = evento;
+
+  document.getElementById('error-box').style.display = 'none';
+  document.getElementById('aviso-key').style.display = 'none';
+  document.getElementById('btn-analizar').disabled = true;
+  document.getElementById('progress-section').style.display = 'block';
+  document.getElementById('results-section').style.display = 'none';
+
+  try {
+    setStep(1);
+    await sleep(300);
+
+    setStep(2);
+
+    // Dividir el discurso en bloques de ~10,000 caracteres respetando párrafos,
+    // para procesar el texto COMPLETO (no solo el inicio)
+    const CHUNK = 10000;
+    const chunks = [];
+    let resto = texto;
+    while (resto.length > 0) {
+      if (resto.length <= CHUNK) { chunks.push(resto); break; }
+      // Cortar en el último punto o salto de línea antes del límite
+      let corte = resto.lastIndexOf('. ', CHUNK);
+      if (corte < CHUNK * 0.5) corte = resto.lastIndexOf('\n', CHUNK);
+      if (corte < CHUNK * 0.5) corte = CHUNK;
+      chunks.push(resto.slice(0, corte + 1));
+      resto = resto.slice(corte + 1);
+    }
+
+    // Detectar promesas en cada bloque secuencialmente
+    let todasLasPromesas = [];
+    for (let ci = 0; ci < chunks.length; ci++) {
+      document.querySelector('#st2').innerHTML = `<div class="dot"></div>Detectando promesas con GPT-4o (bloque ${ci+1} de ${chunks.length})`;
+      const raw = await callOpenAI(
+        'Eres un analista político experto en identificar promesas presidenciales peruanas. Respondes SOLO en JSON válido.',
+        promptDeteccion(chunks[ci], orador, fecha, evento)
+      );
+      const det = parseJSON(raw);
+      if (det?.promesas?.length) todasLasPromesas.push(...det.promesas);
+    }
+
+    // Deduplicar promesas muy similares entre bloques (por primeras 60 letras)
+    const vistas = new Set();
+    todasLasPromesas = todasLasPromesas.filter(p => {
+      const huella = (p.promesa || '').toLowerCase().replace(/\s+/g,' ').slice(0, 60);
+      if (!huella || vistas.has(huella)) return false;
+      vistas.add(huella);
+      return true;
+    });
+
+    if (!todasLasPromesas.length) {
+      document.getElementById('progress-section').style.display = 'none';
+      showErr('No se detectaron promesas. Verifica que el texto sea un discurso con compromisos explícitos.');
+      document.getElementById('btn-analizar').disabled = false;
+      return;
+    }
+
+    ST.promises = todasLasPromesas.map((p, i) => ({ ...p, id: i, categoria: 'PENDIENTE', analisis: null, fuentes: [], obs: null, manual: false }));
+
+    setStep(4);
+    document.getElementById('prog-bar').style.width = '100%';
+    renderResultados();
+    document.getElementById('results-section').style.display = 'block';
+    document.getElementById('progress-section').style.display = 'none';
+    // Ya NO se verifica automáticamente: el periodista decide cuándo y cómo calificar.
+    // Puede usar "Calificar todas con IA", calificar una por una, o asignar a mano.
+
+  } catch(err) {
+    document.getElementById('progress-section').style.display = 'none';
+    showErr('Error: ' + err.message);
+  }
+
+  document.getElementById('btn-analizar').disabled = false;
+}
+
+// Calificar todas las promesas pendientes con IA
+async function calificarTodas() {
+  const pendientes = ST.promises.filter(p => p.categoria === 'PENDIENTE' || p.categoria === 'ERROR');
+  if (!pendientes.length) return;
+  const btn = document.getElementById('btn-calificar-todas');
+  if (btn) { btn.disabled = true; btn.textContent = 'Calificando…'; }
+
+  for (let i = 0; i < pendientes.length; i += 2) {
+    await Promise.all(pendientes.slice(i, i+2).map(p => verificar(p)));
+    if (i + 2 < pendientes.length) await sleep(600);
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = '⚡ Calificar todas con IA'; }
+}
+
+async function verificar(p) {
+  try {
+    let resultado = null;
+
+    if (cfg.perplexity) {
+      const { text, citations } = await callPerplexity(promptViabilidad(p.promesa, p.sector, ST.orador));
+      resultado = parseJSON(text);
+      if (resultado && citations.length && (!resultado.fuentes?.some(f => f.url))) {
+        resultado.citas_extra = citations.slice(0, 4);
+      }
+    } else {
+      // Fallback: usar OpenAI para la viabilidad
+      const raw = await callOpenAI(
+        'Eres un experto en derecho constitucional y presupuesto del Estado peruano. Respondes SOLO en JSON.',
+        promptViabilidad(p.promesa, p.sector, ST.orador)
+      );
+      resultado = parseJSON(raw);
+    }
+
+    if (resultado) {
+      p.categoria = resultado.categoria;
+      p.analisis  = resultado.analisis;
+      p.obs       = resultado.obstaculos;
+      p.condiciones = resultado.condiciones;
+      p.fuentes   = resultado.fuentes || [];
+      p.confianza = resultado.confianza;
+      if (resultado.citas_extra) p.citas_extra = resultado.citas_extra;
+    } else {
+      p.categoria = 'ERROR';
+      p.analisis  = 'No se pudo obtener análisis de viabilidad. Revisa las claves API en ⚙ y vuelve a intentar.';
+    }
+  } catch(e) {
+    p.categoria = 'ERROR';
+    p.analisis  = 'Error al verificar: ' + e.message;
+  }
+  actualizarCard(p);
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function renderResultados() {
+  const title = ST.orador ? `Compromisos de ${ST.orador}` : 'Compromisos identificados';
+  document.getElementById('r-title').textContent = title;
+  const meta = [
+    ST.promises.length + ' compromisos detectados',
+    ST.fecha && `Discurso del ${ST.fecha}`,
+    ST.evento
+  ].filter(Boolean).join(' · ');
+  document.getElementById('r-meta').textContent = meta;
+  renderStats();
+  renderCards();
+}
+
+function renderStats() {
+  const counts = {};
+  ['VIABLE','INVIABLE','OBLIGACION_LEGAL','NO_ESTA_EN_SUS_MANOS','YA_EXISTE'].forEach(k => counts[k] = 0);
+  ST.promises.forEach(p => { if (p.categoria && counts[p.categoria] !== undefined) counts[p.categoria]++; });
+
+  const CATS_OFICIALES = Object.fromEntries(Object.entries(CATS).filter(([k]) => k !== 'ERROR'));
+  document.getElementById('stats-strip').innerHTML = Object.entries(CATS_OFICIALES).map(([k, v]) => {
+    const isSel = ST.filter === k;
+    const isDim = ST.filter && !isSel;
+    return `<div class="stat ${v.cls} ${isSel?'sel':''} ${isDim?'dim':''}" onclick="filtrar('${k}')">
+      <div class="stat-n">${counts[k]}</div>
+      <div class="stat-l">${v.short}</div>
+    </div>`;
+  }).join('');
+}
+
+function bodyHTML(p) {
+  if (!p.categoria) {
+    return `<div class="spin-row"><div class="spinner"></div>Verificando viabilidad con Perplexity y fuentes oficiales…</div>`;
+  }
+
+  // Estado PENDIENTE: mostrar controles de calificación (IA o manual)
+  if (p.categoria === 'PENDIENTE') {
+    let h = '<div class="card-meta">';
+    if (p.verbo)  h += `<div class="mi">⚡ <strong>${esc(p.verbo)}</strong></div>`;
+    if (p.sector) h += `<div class="mi">🏛 <strong>${esc(p.sector)}</strong></div>`;
+    if (p.plazo)  h += `<div class="mi">⏱ ${esc(p.plazo)}</div>`;
+    h += '</div>';
+    h += `<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:4px">
+      <button class="btn-sec" onclick="reintentarCard(${p.id})" style="border-color:var(--amarillo); font-weight:700">⚡ Calificar con IA</button>
+      <span style="font-size:11px; color:var(--gris-4)">o asigna a mano:</span>
+      ${CATS_MANUAL.map(k => `<button class="btn-sec" onclick="calificarManual(${p.id}, '${k}')" style="font-size:10px; padding:5px 10px">${CATS[k].short}</button>`).join('')}
+    </div>`;
+    if (p.cita) h += `<div class="mi" style="margin-top:10px; font-size:11px; color:var(--gris-5)">Fragmento: «${esc(p.cita.slice(0,120))}${p.cita.length>120?'…':''}»</div>`;
+    return h;
+  }
+
+  let h = '<div class="card-meta">';
+  if (p.verbo)    h += `<div class="mi">⚡ <strong>${esc(p.verbo)}</strong></div>`;
+  if (p.sector)   h += `<div class="mi">🏛 <strong>${esc(p.sector)}</strong></div>`;
+  if (p.plazo)    h += `<div class="mi">⏱ ${esc(p.plazo)}</div>`;
+  if (p.confianza)h += `<div class="mi">🎯 ${p.confianza}%</div>`;
+  h += '</div>';
+
+  if (p.analisis) h += `<div class="card-analysis">${esc(p.analisis)}</div>`;
+
+  // Botón de reintento para tarjetas con error
+  if (p.categoria === 'ERROR') {
+    h += `<button class="btn-sec" onclick="reintentarCard(${p.id})" style="margin-bottom:10px">↻ Reintentar verificación</button>`;
+  }
+
+  if (p.obs)      h += `<div class="card-obs"><strong>Obstáculos:</strong> ${esc(p.obs)}</div>`;
+  if (p.condiciones && p.condiciones !== 'null') h += `<div class="card-analysis" style="border-left:3px solid var(--viable-brd); background:var(--viable-bg); color:var(--viable)"><strong>Podría ser viable si:</strong> ${esc(p.condiciones)}</div>`;
+
+  const fuentes = p.fuentes || [];
+  if (fuentes.length) {
+    h += '<div class="card-sources">';
+    fuentes.forEach(f => {
+      h += f.url
+        ? `<a class="src" href="${esc(f.url)}" target="_blank">↗ ${esc(f.nombre)}${f.dato ? ': ' + esc(f.dato) : ''}</a>`
+        : `<div class="src-plain">📌 ${esc(f.nombre)}${f.dato ? ': ' + esc(f.dato) : ''}</div>`;
+    });
+    h += '</div>';
+  }
+
+  if (p.citas_extra?.length) {
+    h += '<div class="card-sources" style="margin-top:6px">';
+    p.citas_extra.forEach(url => {
+      h += `<a class="src" href="${esc(url)}" target="_blank">↗ Fuente verificada (Perplexity)</a>`;
+    });
+    h += '</div>';
+  }
+
+  if (p.cita) {
+    h += `<div class="mi" style="margin-top:10px; font-size:11px; color:var(--gris-5)">Fragmento: «${esc(p.cita.slice(0,120))}${p.cita.length>120?'…':''}»</div>`;
+  }
+
+  // Fila de corrección manual: el periodista siempre puede cambiar la calificación
+  h += `<div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:12px; padding-top:10px; border-top:1px dashed var(--gris-6)">
+    <span style="font-size:10px; color:var(--gris-4); font-weight:700; text-transform:uppercase; letter-spacing:0.05em">${p.manual ? '✍ Calificación manual' : '🤖 Calificación IA'} · Corregir:</span>
+    ${CATS_MANUAL.filter(k => k !== p.categoria).map(k => `<button class="btn-sec" onclick="calificarManual(${p.id}, '${k}')" style="font-size:10px; padding:4px 9px">${CATS[k].short}</button>`).join('')}
+  </div>`;
+
+  return h;
+}
+
+// Asignar calificación manualmente (juicio del periodista)
+function calificarManual(id, categoria) {
+  const p = ST.promises.find(x => x.id === id);
+  if (!p) return;
+  p.categoria = categoria;
+  p.manual = true;
+  if (!p.analisis) p.analisis = 'Calificación asignada manualmente por el equipo periodístico.';
+  actualizarCard(p);
+}
+
+function renderCards() {
+  document.getElementById('cards').innerHTML = ST.promises.map(p => {
+    const cat = CATS[p.categoria] || { label: 'Verificando…', cls: 'checking', badge: 'b-check' };
+    return `<div class="card ${cat.cls}" id="c${p.id}">
+      <div class="card-top">
+        <div class="card-quote">${esc(p.promesa)}</div>
+        <span class="badge ${cat.badge}">${cat.label}</span>
+      </div>
+      <div class="card-body">${bodyHTML(p)}</div>
+    </div>`;
+  }).join('');
+}
+
+function actualizarCard(p) {
+  const card = document.getElementById('c' + p.id);
+  if (!card) return;
+  const cat = CATS[p.categoria] || { label: 'Error', cls: 'checking', badge: 'b-check' };
+  card.className = 'card ' + cat.cls;
+  card.querySelector('.badge').className = 'badge ' + cat.badge;
+  card.querySelector('.badge').textContent = cat.label;
+  card.querySelector('.card-body').innerHTML = bodyHTML(p);
+  renderStats();
+}
+
+async function reintentarCard(id) {
+  const p = ST.promises.find(x => x.id === id);
+  if (!p) return;
+  p.categoria = null;
+  p.analisis = null;
+  p.manual = false;
+  actualizarCard(p);
+  await verificar(p);
+}
+
+function filtrar(key) {
+  ST.filter = ST.filter === key ? null : key;
+  ST.promises.forEach(p => {
+    const card = document.getElementById('c' + p.id);
+    if (card) card.classList.toggle('hide', !!(ST.filter && p.categoria !== ST.filter));
+  });
+  renderStats();
+}
+
+// ── EXPORTACIÓN ───────────────────────────────────────────────
+function expCSV() {
+  const cols = ['N°','Promesa','Verbo','Sector','Plazo','Calificación','Análisis','Obstáculos','Condiciones para viabilidad','Fuentes'];
+  const rows = ST.promises.map((p,i) => [
+    i+1, p.promesa, p.verbo||'', p.sector||'', p.plazo||'',
+    (CATS[p.categoria]?.label || '') + (p.manual ? ' (manual)' : ''),
+    p.analisis||'', p.obs||'', p.condiciones||'',
+    (p.fuentes||[]).map(f => f.nombre + (f.url ? ': '+f.url : '')).join(' | ')
+  ].map(v => '"'+String(v).replace(/"/g,'""')+'"').join(','));
+  const nombre = `viabilidad_${ST.orador||'discurso'}_${ST.fecha||new Date().toISOString().slice(0,10)}`.replace(/\s/g,'_');
+  dl([cols.join(','), ...rows].join('\n'), nombre+'.csv', 'text/csv');
+}
+
+function expHTML() {
+  const filas = ST.promises.map((p,i) => {
+    const cat = CATS[p.categoria] || { label: '' };
+    return `<tr><td>${i+1}</td><td><em>${esc(p.promesa)}</em></td><td>${esc(p.verbo||'')}</td><td>${esc(p.sector||'')}</td><td>${esc(p.plazo||'')}</td><td><strong>${cat.label}</strong></td><td>${esc(p.analisis||'')}</td><td>${(p.fuentes||[]).map(f=>f.url?`<a href="${esc(f.url)}">${esc(f.nombre)}</a>`:esc(f.nombre)).join(', ')}</td></tr>`;
+  }).join('');
+  const doc = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<title>Análisis de viabilidad de promesas — El Comercio</title>
+<style>body{font-family:system-ui,sans-serif;max-width:1100px;margin:0 auto;padding:32px 20px}h1{font-family:Georgia,serif}table{width:100%;border-collapse:collapse;font-size:13px;margin-top:24px}th{background:#111;color:#fff;padding:10px 12px;text-align:left}td{padding:10px 12px;border-bottom:1px solid #eee;vertical-align:top}a{color:#B91C1C}</style>
+</head><body>
+<h1>Análisis de viabilidad de promesas — El Comercio</h1>
+<p style="color:#666;font-size:13px">${esc(ST.orador)} · ${esc(ST.fecha)} · ${esc(ST.evento)} · ${ST.promises.length} compromisos</p>
+<table><thead><tr><th>#</th><th>Promesa</th><th>Verbo</th><th>Sector</th><th>Plazo</th><th>Calificación</th><th>Análisis</th><th>Fuentes</th></tr></thead><tbody>${filas}</tbody></table>
+<p style="margin-top:32px;font-size:12px;color:#999">El Comercio · ${new Date().toLocaleDateString('es-PE')}</p>
+</body></html>`;
+  const nombre = `viabilidad_${ST.orador||'discurso'}_${ST.fecha||new Date().toISOString().slice(0,10)}`.replace(/\s/g,'_');
+  dl(doc, nombre+'.html', 'text/html');
+}
+
+function dl(content, filename, type) {
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([content],{type})), download: filename });
+  a.click();
+}
+
+// ── VERIFICACIÓN RÁPIDA EN VIVO ──────────────────────────────
+const vivoItems = [];
+
+function vivoKeydown(e) {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    verificarVivo();
+  }
+}
+
+async function verificarVivo() {
+  const frase = document.getElementById('vivo-input').value.trim();
+  if (!frase) return;
+
+  if (!cfg.openai && !cfg.perplexity) {
+    showErr('Configura al menos una clave API (⚙ arriba) para usar la verificación en vivo.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-vivo');
+  btn.disabled = true;
+  btn.textContent = 'Verificando…';
+  document.getElementById('vivo-input').value = '';
+
+  // Agregar tarjeta en estado "verificando"
+  const id = Date.now();
+  const ts = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const item = { id, frase, ts, categoria: null, analisis: null, fuentes: [], obs: null };
+  vivoItems.unshift(item); // más reciente primero
+  renderVivo();
+
+  try {
+    const promptVivo = `Eres un experto en derecho constitucional, presupuesto público (MEF/SIAF), TUPA de ministerios y PCM del Estado peruano.
+
+Una autoridad de gobierno acaba de decir en vivo, durante su discurso:
+"${frase}"
+
+Evalúa la viabilidad de este compromiso consultando:
+- Ley de Presupuesto del Sector Público vigente y sus anexos (mef.gob.pe; para 2026: Ley N° 32513, Anexo 5 con gasto por pliego y proyectos)
+- Consulta Amigable del MEF (apps5.mineco.gob.pe): ejecución del gasto en tiempo real
+- SPIJ (spij.minjus.gob.pe): normativa vigente
+- TUPA del ministerio sectorial (gob.pe)
+- PCM: competencias del Ejecutivo (pcm.gob.pe)
+- Programas presupuestales vigentes (MIDIS, MINEDU, MINSA, etc.)
+
+CATEGORÍAS (elige EXACTAMENTE UNA):
+- VIABLE: puede ejecutarse con recursos y marco normativo existentes
+- INVIABLE: enfrenta obstáculos legales, presupuestales o institucionales
+- OBLIGACION_LEGAL: la normativa ya le impone esta acción al Ejecutivo
+- NO_ESTA_EN_SUS_MANOS: recae en otras instituciones o poderes
+- YA_EXISTE: política/programa que el Estado ya implementa sin mejora medible
+
+Devuelve SOLO este JSON:
+{
+  "categoria": "VIABLE|INVIABLE|OBLIGACION_LEGAL|NO_ESTA_EN_SUS_MANOS|YA_EXISTE",
+  "confianza": 85,
+  "analisis": "2-3 oraciones con datos concretos: artículos de ley, cifras MEF, nombres de programas existentes",
+  "obstaculos": "Obstáculos concretos o null",
+  "condiciones": "Mecanismo que podría habilitarla (crédito suplementario, transferencia de partidas, ley del Congreso) o null",
+  "fuentes": [
+    { "nombre": "Fuente oficial", "url": "https://...", "dato": "Dato concreto" }
+  ]
+}`;
+
+    let resultado = null;
+
+    if (cfg.perplexity) {
+      const { text, citations } = await callPerplexity(promptVivo);
+      resultado = parseJSON(text);
+      if (resultado && citations.length && (!resultado.fuentes?.some(f => f.url))) {
+        resultado.citas_extra = citations.slice(0, 3);
+      }
+    } else {
+      const raw = await callOpenAI(
+        'Eres un experto en institucionalidad del Estado peruano. Respondes SOLO en JSON válido.',
+        promptVivo
+      );
+      resultado = parseJSON(raw);
+    }
+
+    if (resultado) {
+      item.categoria  = resultado.categoria;
+      item.analisis   = resultado.analisis;
+      item.obs        = resultado.obstaculos;
+      item.condiciones = resultado.condiciones;
+      item.fuentes    = resultado.fuentes || [];
+      item.confianza  = resultado.confianza;
+      if (resultado.citas_extra) item.citas_extra = resultado.citas_extra;
+    } else {
+      item.categoria = 'ERROR';
+      item.analisis  = 'No se pudo obtener análisis. Revisa las claves API en ⚙.';
+    }
+
+  } catch(e) {
+    item.categoria = 'ERROR';
+    item.analisis  = 'Error: ' + e.message;
+  }
+
+  renderVivo();
+  btn.disabled = false;
+  btn.textContent = 'Verificar frase';
+  document.getElementById('vivo-input').focus();
+}
+
+function renderVivo() {
+  const container = document.getElementById('vivo-results');
+  const empty = document.getElementById('vivo-empty');
+
+  if (vivoItems.length === 0) {
+    empty.style.display = 'block';
+    container.innerHTML = '';
+    container.appendChild(empty);
+    return;
+  }
+
+  empty.style.display = 'none';
+
+  container.innerHTML = vivoItems.map(item => {
+    const cat = CATS[item.categoria] || { label: 'Verificando…', cls: 'checking', badge: 'b-check' };
+    const isLoading = !item.categoria;
+
+    let bodyHtml = '';
+    if (isLoading) {
+      bodyHtml = `<div class="spin-row"><div class="spinner"></div>Consultando MEF, SPIJ y ministerios…</div>`;
+    } else {
+      if (item.analisis) bodyHtml += `<div class="vivo-analysis">${esc(item.analisis)}</div>`;
+      if (item.obs)      bodyHtml += `<div class="card-obs" style="margin-bottom:8px"><strong>Obstáculos:</strong> ${esc(item.obs)}</div>`;
+      if (item.condiciones && item.condiciones !== 'null') bodyHtml += `<div class="card-analysis" style="border-left:3px solid var(--viable-brd); background:var(--viable-bg); color:var(--viable); margin-bottom:8px"><strong>Podría ser viable si:</strong> ${esc(item.condiciones)}</div>`;
+
+      const fuentes = item.fuentes || [];
+      if (fuentes.length) {
+        bodyHtml += '<div class="card-sources">';
+        fuentes.forEach(f => {
+          bodyHtml += f.url
+            ? `<a class="src" href="${esc(f.url)}" target="_blank">↗ ${esc(f.nombre)}${f.dato ? ': ' + esc(f.dato) : ''}</a>`
+            : `<div class="src-plain">📌 ${esc(f.nombre)}${f.dato ? ': ' + esc(f.dato) : ''}</div>`;
+        });
+        bodyHtml += '</div>';
+      }
+
+      if (item.citas_extra?.length) {
+        bodyHtml += '<div class="card-sources" style="margin-top:4px">';
+        item.citas_extra.forEach(url => {
+          bodyHtml += `<a class="src" href="${esc(url)}" target="_blank">↗ Fuente verificada por Perplexity</a>`;
+        });
+        bodyHtml += '</div>';
+      }
+    }
+
+    return `<div class="vivo-card ${cat.cls}">
+      <div class="vivo-card-top">
+        <div class="vivo-card-frase">${esc(item.frase)}</div>
+        <span class="badge ${cat.badge}">${cat.label}</span>
+      </div>
+      <div class="vivo-card-body">
+        ${bodyHtml}
+        <div class="vivo-ts">🕐 ${item.ts}${item.confianza ? ` · ${item.confianza}% confianza` : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function limpiarVivo() {
+  if (vivoItems.length && !confirm('¿Limpiar todas las verificaciones en vivo?')) return;
+  vivoItems.length = 0;
+  renderVivo();
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+loadCfg();
+renderVivo();
+</script>
+</body>
+</html>
